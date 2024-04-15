@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VBとC#の表示</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .file {
+            padding: 10px;
+            border: 1px solid #ccc;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="file">
+                    <h2>VBファイル</h2>
+                    <h3 id="fileAName"></h3>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="file">
+                    <h2>C#ファイル</h2>
+                    <h3 id="fileBName"></h3>
+                </div>
+            </div>
+         </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="file">
+                    <pre id="fileAContent" contenteditable="false"></pre>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="file">
+                    <pre id="fileBContent" contenteditable="false"></pre>
+                </div>
+            </div>
+         </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="file">
+                    <h3>関数リスト</h3>
+                    <ul id="fileAFunctions"></ul>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="file">
+                    <h3>関数リスト</h3>
+                    <ul id="fileBFunctions"></ul>
+                </div>
+            </div>
+         </div>
+    </div>
+
+    <input type="file" id="fileInput" accept=".txt, .cs">
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function() {
+            const file = this.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const data = e.target.result;
+                const fileName = file.name;
+
+                if (fileName.endsWith('.txt')) {
+                    document.getElementById('fileAName').innerText = fileName;
+                    document.getElementById('fileAContent').innerText = data;
+                    const functions = data.match(/(Function|Sub)\s+\w+/g) || [];
+                    const fileAFunctions = document.getElementById('fileAFunctions');
+                    fileAFunctions.innerHTML = ''; // Clear previous functions
+                    functions.forEach(func => {
+                        if (!func.includes("'")) { // Ignore functions in comments
+                            const li = document.createElement('li');
+                            li.textContent = func;
+                            fileAFunctions.appendChild(li);
+                        }
+                    });
+                } else if (fileName.endsWith('.cs')) {
+                    document.getElementById('fileBName').innerText = fileName;
+                    document.getElementById('fileBContent').innerText = data;
+                    const functions = data.match(/(public|private)\s+\w+\s+\w+\(.*\)/g) || [];
+                    const fileBFunctions = document.getElementById('fileBFunctions');
+                    fileBFunctions.innerHTML = ''; // Clear previous functions
+                    functions.forEach(func => {
+                        let isInComment = false;
+                        for (let i = func.indexOf(func[0]); i >= 0; i--) {
+                            if (func[i] === '/' && func[i - 1] === '/') {
+                                isInComment = true;
+                                break;
+                            }
+                            if (func[i] === "'") {
+                                isInComment = true;
+                                break;
+                            }
+                        }
+                        if (!isInComment) {
+                            const li = document.createElement('li');
+                            li.textContent = func;
+                            fileBFunctions.appendChild(li);
+                        }
+                    });
+                } else {
+                    alert('サポートされていないファイル形式です。');
+                }
+            };
+
+            if (file.name.endsWith('.txt')) {
+                reader.readAsText(file, 'Shift_JIS');
+            } else {
+                reader.readAsText(file, 'UTF-8');
+            }
+        });
+    </script>
+</body>
+</html>
